@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { Platform } from 'react-native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { Platform, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Ionicons, FontAwesome5, MaterialIcons, Feather, AntDesign,
@@ -9,51 +9,107 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
+import { configureStore } from '@reduxjs/toolkit';
+import { Provider as ReactReduxProvider, useSelector, useDispatch } from 'react-redux';
 import { navigationRef } from './src/RootNavigation';
 import SignIn from './src/screens/SignIn';
 import SignUp from './src/screens/SignUp';
 import PasswordReset from './src/screens/PasswordReset';
 import Products from './src/screens/Products';
+import AddProduct from './src/screens/addProduct';
 import Orders from './src/screens/Orders';
 import Account from './src/screens/Account';
-import { Provider as PaletteProvider, Context as PaletteContext } from './src/context/paletteContext';
+import userReducer from './src/reducers/Users';
+import authReducer from './src/reducers/Auth';
+import configReducer from './src/reducers/Config';
+import productReducer from './src/reducers/Product';
+import paletteReducer, { changeBG, changeTheme, fontsLoadedStatus } from './src/reducers/Palette';
 
 
 const Stack = createNativeStackNavigator();
 const Bottom = createBottomTabNavigator();
 
-function Home() {
-  const { state: { palette } } = useContext(PaletteContext);
+const store = configureStore({
+  reducer: {
+    auth: authReducer,
+    user: userReducer,
+    palette: paletteReducer,
+    config: configReducer,
+    product: productReducer,
+  },
+  middleware: getDefaultMiddleware => getDefaultMiddleware({
+    immutableCheck: { warnAfter: 128 },
+    serializableCheck: { warnAfter: 128 },
+  }),
+});
+
+function Logo() {
   return (
-    <Bottom.Navigator initialRouteName="Products" screenOptions={{
+    <Image
+      style={{
+        width: 250,
+        height: 80,
+        resizeMode: 'cover',
+        marginVertical: 10,
+      }}
+      source={require('./assets/logo.png')} />
+  );
+}
+
+function Product() {
+  const palettes = useSelector(state => state.palette.value);
+  return (
+    <Stack.Navigator initialRouteName="Products" screenOptions={{
       headerShown: false,
-      tabBarActiveTintColor: palette.background,
-      tabBarInactiveTintColor: palette.buttonsInactive,
+    }}>
+      <Stack.Screen name="Products" component={Products} options={{ title: 'Products' }} />
+      <Stack.Screen name="AddProduct" component={AddProduct} options={{ title: 'Add a product' }} />
+    </Stack.Navigator>
+  );
+}
+
+function Home() {
+  const palettes = useSelector(state => state.palette.value);
+  return (
+    <Bottom.Navigator initialRouteName="Product" screenOptions={{
+      headerShown: true,
+      headerStyle: {
+        backgroundColor: palettes.palette.background,
+        height: 80,
+      },
+      tabBarActiveTintColor: palettes.palette.background,
+      tabBarInactiveTintColor: palettes.palette.buttonsInactive,
       tabBarStyle: {
-        backgroundColor: palette.text,
+        backgroundColor: palettes.palette.text,
         borderTopWidth: 0,
         justifyContent: 'center',
         height: Platform.OS === 'ios' ? 70 : 60,
         paddingBottom: Platform.OS === 'ios' ? 20 : 10,
       },
     }}>
-      <Bottom.Screen name="Products" component={Products} options={{
+      <Bottom.Screen name="Product" component={Product} options={{
         title: 'Products',
         tabBarIcon: ({ color, size }) => (
           <Feather name="box" color={color} size={size} />
         ),
+        headerTitle: () => <Logo />,
+        headerShadowVisible: false,
       }} />
       <Bottom.Screen name="Orders" component={Orders} options={{
         title: 'Orders',
         tabBarIcon: ({ color, size }) => (
           <AntDesign name="shoppingcart" color={color} size={size} />
         ),
+        headerTitle: () => <Logo />,
+        headerShadowVisible: false,
       }} />
       <Bottom.Screen name="Account" component={Account} options={{
         title: 'Account',
         tabBarIcon: ({ color, size }) => (
           <FontAwesome5 name="user" color={color} size={size} />
         ),
+        headerTitle: () => <Logo />,
+        headerShadowVisible: false,
       }} />
     </Bottom.Navigator>
   );
@@ -72,18 +128,23 @@ function Auth() {
 }
 
 function App() {
-  const { changeBG, changeTheme, fontsLoadedStatus } = useContext(PaletteContext);
+  const dispatch = useDispatch();
+  const palettes = useSelector(state => state.palette.value);
   const loadTheme = async () => {
     SplashScreen.preventAutoHideAsync().catch(() => {});
     try {
       const theme = await AsyncStorage.getItem('theme');
       const bg = await AsyncStorage.getItem('bg');
       if (theme !== null) {
-        changeTheme(JSON.parse(theme));
+        dispatch(changeTheme(JSON.parse(theme)));
       }
       if (bg !== null) {
-        changeBG(JSON.parse(bg));
+        dispatch(changeBG(JSON.parse(bg)));
       }
+      await Font.loadAsync({
+        'manuscript-font': require('./assets/fonts/Manuscript.ttf'),
+      });
+      dispatch(fontsLoadedStatus(true));
     } catch (e) {
       // error reading value
     } finally {
@@ -95,8 +156,16 @@ function App() {
     loadTheme();
   }, []);
 
+  const MyTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: palettes.palette.background,
+    },
+  };
+
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} theme={MyTheme}>
       <Stack.Navigator initialRouteName="Home" screenOptions={{
         headerShown: false,
       }}>
@@ -108,7 +177,7 @@ function App() {
 }
 
 export default () => {
-  return <PaletteProvider>
-    <App />
-  </PaletteProvider>;
+  return <ReactReduxProvider store={store}>
+      <App />
+  </ReactReduxProvider>;
 };

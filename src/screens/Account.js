@@ -2,22 +2,21 @@ import React, { useState, useContext, useEffect } from 'react';
 import {
   View, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { Text, Input, Button } from 'react-native-elements';
-import { Context as PaletteContext } from '../context/paletteContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { signout } from '../actions/Auth';
 
 const AccountScreen = () => {
-  const navigation = useNavigation();
-  const { state: { palette } } = useContext(PaletteContext);
+  const dispatch = useDispatch();
 
-  const styles = paletteStyles(palette);
+  const styles = paletteStyles();
   return <View style={styles.container}>
     <Text>Account screen</Text>
     <Button
       title='Sign out'
       buttonStyle={styles.signupButton}
       titleStyle={styles.signupButtonText}
-      onPress={() => navigation.navigate('Auth', { screen: 'Signin' }) }
+      onPress={() => dispatch(signout()) }
     />
   </View>;
 };

@@ -4,20 +4,27 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Text, Input, Button } from 'react-native-elements';
-import { Context as PaletteContext } from '../context/paletteContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { validateAuth } from '../actions/Auth';
 
 const ProductsScreen = () => {
   const navigation = useNavigation();
-  const { state: { palette } } = useContext(PaletteContext);
+  const dispatch = useDispatch();
 
-  const styles = paletteStyles(palette);
+  useEffect(() => {
+    dispatch(validateAuth());
+    navigation.addListener('focus', () => {
+    });
+  }, []);
+
+  const styles = paletteStyles();
   return <View style={styles.container}>
     <Text>Products screen</Text>
     <Button
-      title='Orders'
+      title='Add a product'
       buttonStyle={styles.signupButton}
       titleStyle={styles.signupButtonText}
-      onPress={() => navigation.navigate('Home', { screen: 'Orders' }) }
+      onPress={() => navigation.navigate('AddProduct') }
     />
   </View>;
 };

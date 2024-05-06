@@ -4,13 +4,11 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Text, Input, Button } from 'react-native-elements';
-import { Context as PaletteContext } from '../context/paletteContext';
 
 const OrdersScreen = () => {
   const navigation = useNavigation();
-  const { state: { palette } } = useContext(PaletteContext);
 
-  const styles = paletteStyles(palette);
+  const styles = paletteStyles();
   return <View style={styles.container}>
     <Text>Orders screen</Text>
     <Button

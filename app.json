@@ -25,6 +25,12 @@
       },
       "package": "com.mightydukk.sparesmd"
     },
+    "androidStatusBar": {
+      "translucent": true
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#ffffff"
+    },
     "web": {
       "favicon": "./assets/favicon.png"
     }
