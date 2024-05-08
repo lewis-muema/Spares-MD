@@ -1,8 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storeConfig } from '../reducers/Config';
-import { addImage, addModels, setUploadStatus } from '../reducers/Product';
+import * as RootNavigation from '../RootNavigation';
+import {
+  addImage, addModels, setUploadStatus, setSuccessMessage, setErrorMessage, setLoading,
+} from '../reducers/Product';
 import spares from '../api/spares';
 import photos from '../api/googlephotos';
+
 
 const storeData = async (key, value) => {
   await AsyncStorage.setItem(key, value);
@@ -80,16 +84,19 @@ export const getPhotoURL = (photoId) => {
   };
 };
 
-export const createProduct = () => {
+export const createProduct = (payload) => {
   return async (dispatch) => {
-    spares.get('/car-models').then((res) => {
-      const models = [];
-      res.data.models.forEach((model) => {
-        model.label = model.name;
-        model.value = model._id;
-        models.push(model);
-      });
-      dispatch(addModels(models));
-    }).catch((err) => {});
+    dispatch(setLoading(true));
+    spares.post('/products', payload).then((res) => {
+      dispatch(setSuccessMessage(res?.data?.message));
+      dispatch(setLoading(false));
+      setTimeout(() => {
+        dispatch(setSuccessMessage(''));
+        RootNavigation.navigate('Products');
+      }, 3000);
+    }).catch((err) => {
+      dispatch(setErrorMessage(`Failed to create product: ${err?.response?.data?.error}`));
+      dispatch(setLoading(false));
+    });
   };
 };

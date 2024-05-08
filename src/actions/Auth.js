@@ -36,6 +36,9 @@ export const signup = ({
       storeData('token', res?.data?.token);
       storeData('email', email);
       storeData('userId', res?.data?.userId);
+      storeData('currency', res?.data?.currency);
+      storeData('type', res?.data?.type);
+      storeData('status', res?.data?.status);
       dispatch(addToken(res?.data?.token));
       dispatch(setLoading(false));
       if (userType === 1) {
@@ -59,6 +62,10 @@ export const signin = ({ email, password }, loading) => {
   return async (dispatch) => {
     spares.post('/signin', { email, password }).then((res) => {
       storeData('token', res?.data?.token);
+      storeData('storeId', res?.data?.storeId);
+      storeData('currency', res?.data?.currency);
+      storeData('type', res?.data?.type);
+      storeData('status', res?.data?.status);
       storeData('email', email);
       storeData('userId', res?.data?.userId);
       dispatch(addToken(res?.data?.token));

@@ -1,8 +1,9 @@
 import React, { useState, useContext, useEffect } from 'react';
 import {
-  View, StyleSheet, TouchableOpacity, Image,
+  View, StyleSheet, TouchableOpacity, Image, FlatList,
   KeyboardAvoidingView, ScrollView, SafeAreaView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   AntDesign, MaterialIcons, MaterialCommunityIcons, Entypo, Ionicons,
 } from '@expo/vector-icons';
@@ -12,37 +13,44 @@ import {
 } from 'react-native-elements';
 import { useSelector, useDispatch } from 'react-redux';
 import { Dropdown } from 'react-native-element-dropdown';
-import { validateAuth } from '../actions/Auth';
-import { fetchModels } from '../actions/Product';
+import { fetchModels, createProduct } from '../actions/Product';
 import {
   addName, addNameErr, addDescription,
   addPrice, addPriceErr, addSerialNo,
   addSerialNoErr, addModel, setBrand,
   setBrandErr, setUnits, setColor,
   setMaterial, setSize, setWeight,
+  setUnitsErr, setVariant, addVariant,
+  removeVariant, resetVariant, setVariantObject,
+  editVariant, setErrorMessage, setImageErr,
+  setModelErr,
 } from '../reducers/Product';
 import ImagePicker from '../components/imagePicker';
+import Spacer from '../components/Spacer';
+import Banner from '../components/banner';
 
 const textRef = React.createRef();
 const priceRef = React.createRef();
 const serialRef = React.createRef();
 const brandRef = React.createRef();
+const unitsRef = React.createRef();
 
 const AddProductsScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [isFocus, setIsFocus] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editIndex, setEditIndex] = useState(0);
 
   useEffect(() => {
-    dispatch(validateAuth());
     navigation.addListener('focus', () => {
       dispatch(fetchModels());
     });
   }, []);
 
-  const TextValidator = (val, err, field, ref) => {
-    if (!/^([a-zA-Z]{2,})$/.test(val)) {
+  const TextValidator = (val, err, field, ref, optional) => {
+    if ((!/^([a-zA-Z0-9\s]{2,})$/.test(val) && !optional) || (optional && val && !/^([a-zA-Z0-9\s]{2,})$/.test(val))) {
       ref.current.shake();
       err(`Please add ${field}`);
       return true;
@@ -51,8 +59,8 @@ const AddProductsScreen = () => {
     return false;
   };
 
-  const NumberValidator = (val, err, field, ref) => {
-    if (!/^([0-9])$/.test(val)) {
+  const NumberValidator = (val, err, field, ref, optional) => {
+    if ((!/^\d+$/.test(val) && !optional) || (optional && val && !/^\d+$/.test(val))) {
       ref.current.shake();
       err(`Please add ${field}`);
       return true;
@@ -61,37 +69,84 @@ const AddProductsScreen = () => {
     return false;
   };
 
-  const payloadValidator = () => {
-    if (!product.nameErr
-      && !product.priceErr
-      && !product.brandErr
-      && !product.serialNoErr
+  const addVariantValues = () => {
+    if (!TextValidator(product.variant.brand,
+      error => dispatch(setBrandErr(error)),
+      'a brand (or Generic if you are not sure)',
+      brandRef)) {
+      if (editMode) {
+        dispatch(editVariant({ index: editIndex, object: product.variant }));
+        setEditMode(false);
+        setEditIndex(0);
+      } else {
+        dispatch(addVariant(product.variant));
+      }
+      dispatch(resetVariant());
+      setIsVisible(false);
+    }
+  };
+
+  const removeVariantValues = (index) => {
+    dispatch(resetVariant());
+    dispatch(removeVariant(index));
+  };
+
+  const saveVariant = () => {
+    setIsVisible(true);
+    dispatch(resetVariant());
+  };
+
+  const editVariantValues = (item, index) => {
+    setIsVisible(true);
+    dispatch(resetVariant());
+    dispatch(setVariantObject(item));
+    setEditMode(true);
+    setEditIndex(index);
+  };
+
+  const payloadValidator = async () => {
+    const storeId = await AsyncStorage.getItem('storeId');
+    const currency = await AsyncStorage.getItem('currency');
+    if (!TextValidator(product.name, error => dispatch(addNameErr(error)), 'a name', textRef)
+      && !NumberValidator(product.price, error => dispatch(addPriceErr(error)), 'a valid price', priceRef)
+      && !TextValidator(product.serialNo, error => dispatch(addSerialNoErr(error)), 'a serial number', serialRef)
+      && !TextValidator(product.brand, error => dispatch(setBrandErr(error)), 'a brand (or Generic if you are not sure)', brandRef)
+      && !NumberValidator(product.units, error => dispatch(setUnitsErr(error)), 'a valid stock number', unitsRef, true)
       && product.image
       && product.model) {
       const payload = {
         name: product.name,
-        storeId: '65fd733aed18165e80523c46',
-        price: product.price,
-        modelId: product.modelObj,
-        manufacturerId: product.modelObj,
+        storeId,
+        price: parseInt(product.price, 10),
+        image: product.image,
+        modelId: product.modelObj._id,
+        manufacturerId: product.modelObj.manufacturerId,
         variants: [
           {
-            color: 'Silver',
-            size: '5 feet',
-            weight: '2kg',
-            units: 3,
+            color: product.color,
+            size: product.size,
+            weight: product.weight,
+            units: product.units,
+            material: product.material,
+            brand: product.brand,
           },
-          {
-            color: 'Bronze',
-            size: '5 feet',
-            weight: '2kg',
-            units: 4,
-          },
+          ...product.variants,
         ],
-        description: 'Straight pipes, No Cat, dual tips',
-        serialNo: '359OP930JKZ253',
-        currency: 'KES',
+        description: product.description,
+        serialNo: product.serialNo,
+        currency,
       };
+      dispatch(setErrorMessage(''));
+      dispatch(createProduct(payload));
+    } else {
+      !product.image ? dispatch(setImageErr('Please upload an image')) : null;
+      !product.model ? dispatch(setModelErr('Please select a car model')) : null;
+      TextValidator(product.name, error => dispatch(addNameErr(error)), 'a name', textRef);
+      NumberValidator(product.price, error => dispatch(addPriceErr(error)), 'a valid price', priceRef);
+      TextValidator(product.serialNo, error => dispatch(addSerialNoErr(error)), 'a serial number', serialRef);
+      TextValidator(product.brand, error => dispatch(setBrandErr(error)), 'a brand (or Generic if you are not sure)', brandRef);
+      NumberValidator(product.units, error => dispatch(setUnitsErr(error)), 'a valid stock number', unitsRef, true);
+      dispatch(setErrorMessage('Please fill in the missing fields'));
     }
   };
 
@@ -108,17 +163,20 @@ const AddProductsScreen = () => {
       <ScrollView
         horizontal={false}
         scrollEnabled={true}
+        keyboardShouldPersistTaps='handled'
         contentContainerStyle={styles.scrollView}>
         <Text style={styles.title}>Add a product</Text>
         <Text style={styles.topLabel}>Image</Text>
         <ImagePicker />
+        { product.imageErr ? <Text style={styles.inputErrImg}>{ product.imageErr }</Text> : null
+        }
         <View style={styles.inputContainer}>
           <Input
           ref={textRef}
           label='Name'
           value={product.name}
           onChangeText={val => dispatch(addName(val))}
-          onBlur={val => TextValidator(val, error => dispatch(addNameErr(error)), 'an email', textRef)}
+          onBlur={() => TextValidator(product.name, error => dispatch(addNameErr(error)), 'a name', textRef)}
           errorMessage={product.nameErr}
           labelStyle={styles.label}
           inputStyle={styles.inputTextSytle}
@@ -133,7 +191,7 @@ const AddProductsScreen = () => {
         <View style={styles.inputContainer}>
           <Input
           label='Description (Optional)'
-          value={product.name}
+          value={product.description}
           onChangeText={val => dispatch(addDescription(val))}
           labelStyle={styles.label}
           inputStyle={styles.inputTextSytle}
@@ -152,7 +210,7 @@ const AddProductsScreen = () => {
           value={product.price}
           keyboardType = 'numeric'
           onChangeText={val => dispatch(addPrice(val))}
-          onBlur={val => NumberValidator(val, error => dispatch(addPriceErr(error)), 'a valid price', priceRef)}
+          onBlur={() => NumberValidator(product.price, error => dispatch(addPriceErr(error)), 'a valid price', priceRef)}
           errorMessage={product.priceErr}
           labelStyle={styles.label}
           inputStyle={styles.inputTextSytle}
@@ -170,7 +228,7 @@ const AddProductsScreen = () => {
           label='Serial Number'
           value={product.serialNo}
           onChangeText={val => dispatch(addSerialNo(val))}
-          onBlur={val => TextValidator(val, error => dispatch(addSerialNoErr(error)), 'a serial number', serialRef)}
+          onBlur={() => TextValidator(product.serialNo, error => dispatch(addSerialNoErr(error)), 'a serial number', serialRef)}
           errorMessage={product.serialNoErr}
           labelStyle={styles.label}
           inputStyle={styles.inputTextSytle}
@@ -208,6 +266,7 @@ const AddProductsScreen = () => {
               <AntDesign color={palettes.palette.text} style={{ marginRight: 10 }} name="car" size={18} />
             )}
           />
+          { product.modelErr ? <Text style={styles.inputErr}>{ product.modelErr }</Text> : null }
         </View>
         <View style={styles.inputContainer}>
           <Input
@@ -215,7 +274,7 @@ const AddProductsScreen = () => {
           label='Brand'
           value={product.brand}
           onChangeText={val => dispatch(setBrand(val))}
-          onBlur={val => TextValidator(val, error => dispatch(setBrandErr(error)), 'a brand (or Generic if you are not sure)', brandRef)}
+          onBlur={() => TextValidator(product.brand, error => dispatch(setBrandErr(error)), 'a brand (or Generic if you are not sure)', brandRef)}
           errorMessage={product.brandErr}
           labelStyle={styles.label}
           inputStyle={styles.inputTextSytle}
@@ -229,11 +288,13 @@ const AddProductsScreen = () => {
         </View>
         <View style={styles.inputContainer}>
           <Input
-            ref={priceRef}
+            ref={unitsRef}
             label='Units in stock (Optional)'
             keyboardType = 'numeric'
             value={product.units}
             onChangeText={val => dispatch(setUnits(val))}
+            onBlur={() => NumberValidator(product.units, error => dispatch(setUnitsErr(error)), 'a valid stock number', unitsRef, true)}
+            errorMessage={product.unitsErr}
             labelStyle={styles.label}
             inputStyle={styles.inputTextSytle}
             placeholderTextColor={palettes.palette.text}
@@ -305,11 +366,50 @@ const AddProductsScreen = () => {
           } />
         </View>
         <View style={styles.inputContainer}>
+          <FlatList
+            horizontal={true}
+            keyboardShouldPersistTaps='handled'
+            showsHorizontalScrollIndicator={false}
+            data={product.variants}
+            style={styles.variantGroup}
+            renderItem={({ item, index }) => <View style={styles.variantOption}>
+                <View style={styles.variantActions}>
+                  <TouchableOpacity onPress={() => editVariantValues(item, index)}>
+                    <AntDesign name="edit" size={18} color={palettes.palette.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.variantIcons}
+                    onPress={() => removeVariantValues(index)}
+                  >
+                    <AntDesign name='delete' size={18} color='red' />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.variantText}>
+                  <Text style={styles.textBody}>Brand: { item.brand }</Text>
+                  <Text style={styles.textBody}>No of units: { item.units }</Text>
+                  <Text style={styles.textBody}>Color: { item.color }</Text>
+                  <Text style={styles.textBody}>Size: { item.size }</Text>
+                  <Text style={styles.textBody}>Material: { item.material }</Text>
+                  <Text style={styles.textBody}>Weight: { item.weight }</Text>
+                </View>
+              </View>
+            }
+          />
+        </View>
+        { product.errorMessage ? <Spacer>
+          <Banner message={product.errorMessage} type='error'></Banner>
+          </Spacer> : null
+        }
+        { product.successMessage ? <Spacer>
+          <Banner message={product.successMessage} type='success'></Banner>
+          </Spacer> : null
+        }
+        <View style={styles.inputContainer}>
           <Button
             title='Add Variant'
             buttonStyle={styles.saveButton}
             titleStyle={styles.saveButtonText}
-            onPress={() => setIsVisible(true)}
+            onPress={() => saveVariant()}
           />
         </View>
         <View style={styles.inputContainer}>
@@ -318,7 +418,7 @@ const AddProductsScreen = () => {
             buttonStyle={styles.saveButton}
             titleStyle={styles.saveButtonText}
             loading={product.loading}
-            onPress={() => {}}
+            onPress={() => payloadValidator()}
           />
         </View>
       </ScrollView>
@@ -335,9 +435,9 @@ const AddProductsScreen = () => {
             <Input
               ref={brandRef}
               label='Brand'
-              value={product.brand}
-              onChangeText={val => dispatch(setBrand(val))}
-              onBlur={val => TextValidator(val, error => dispatch(setBrandErr(error)), 'a brand (or Generic if you are not sure)', brandRef)}
+              value={product.variant.brand}
+              onChangeText={val => dispatch(setVariant({ value: val, key: 'brand' }))}
+              onBlur={() => TextValidator(product.variant.brand, error => dispatch(setBrandErr(error)), 'a brand (or Generic if you are not sure)', brandRef)}
               errorMessage={product.brandErr}
               labelStyle={styles.label}
               inputStyle={styles.inputTextSytle}
@@ -351,11 +451,13 @@ const AddProductsScreen = () => {
             </View>
             <View style={styles.inputContainer}>
               <Input
-                ref={priceRef}
+                ref={unitsRef}
                 label='Units in stock (Optional)'
                 keyboardType = 'numeric'
-                value={product.units}
-                onChangeText={val => dispatch(setUnits(val))}
+                value={product.variant.units}
+                onChangeText={val => dispatch(setVariant({ value: val, key: 'units' }))}
+                onBlur={() => NumberValidator(product.variant.units, error => dispatch(setUnitsErr(error)), 'a valid stock number', unitsRef, true)}
+                errorMessage={product.unitsErr}
                 labelStyle={styles.label}
                 inputStyle={styles.inputTextSytle}
                 placeholderTextColor={palettes.palette.text}
@@ -369,8 +471,8 @@ const AddProductsScreen = () => {
             <View style={styles.inputContainer}>
             <Input
               label='Color (Optional)'
-              value={product.color}
-              onChangeText={val => dispatch(setColor(val))}
+              value={product.variant.color}
+              onChangeText={val => dispatch(setVariant({ value: val, key: 'color' }))}
               labelStyle={styles.label}
               inputStyle={styles.inputTextSytle}
               placeholderTextColor={palettes.palette.text}
@@ -384,8 +486,8 @@ const AddProductsScreen = () => {
             <View style={styles.inputContainer}>
               <Input
               label='Material (Optional)'
-              value={product.material}
-              onChangeText={val => dispatch(setMaterial(val))}
+              value={product.variant.material}
+              onChangeText={val => dispatch(setVariant({ value: val, key: 'material' }))}
               labelStyle={styles.label}
               inputStyle={styles.inputTextSytle}
               placeholderTextColor={palettes.palette.text}
@@ -399,8 +501,8 @@ const AddProductsScreen = () => {
             <View style={styles.inputContainer}>
               <Input
               label='Size (Optional)'
-              value={product.size}
-              onChangeText={val => dispatch(setSize(val))}
+              value={product.variant.size}
+              onChangeText={val => dispatch(setVariant({ value: val, key: 'size' }))}
               labelStyle={styles.label}
               inputStyle={styles.inputTextSytle}
               placeholderTextColor={palettes.palette.text}
@@ -414,8 +516,8 @@ const AddProductsScreen = () => {
             <View style={styles.inputContainer}>
               <Input
               label='Weight (Optional)'
-              value={product.weight}
-              onChangeText={val => dispatch(setWeight(val))}
+              value={product.variant.weight}
+              onChangeText={val => dispatch(setVariant({ value: val, key: 'weight' }))}
               labelStyle={styles.label}
               inputStyle={styles.inputTextSytle}
               placeholderTextColor={palettes.palette.text}
@@ -431,7 +533,7 @@ const AddProductsScreen = () => {
                 title='Save Variant'
                 buttonStyle={styles.saveButton}
                 titleStyle={styles.saveButtonText}
-                onPress={() => setIsVisible(false)}
+                onPress={() => addVariantValues()}
               />
             </View>
           </View>
@@ -506,6 +608,46 @@ const paletteStyles = palette => StyleSheet.create({
   },
   closeIcon: {
     alignSelf: 'flex-end',
+  },
+  textBody: {
+    color: palette.text,
+    fontSize: 14,
+  },
+  variantGroup: {
+    height: 'auto',
+    marginHorizontal: 10,
+  },
+  variantOption: {
+    borderColor: palette.text,
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 2,
+    marginRight: 10,
+    marginBottom: 20,
+  },
+  variantIcons: {
+    marginLeft: 'auto',
+  },
+  variantText: {
+    marginHorizontal: 5,
+    marginVertical: 10,
+  },
+  variantActions: {
+    flexDirection: 'row',
+    marginHorizontal: 5,
+  },
+  inputErr: {
+    fontSize: 12,
+    color: 'red',
+    marginLeft: 15,
+    marginTop: -15,
+    marginBottom: 10,
+  },
+  inputErrImg: {
+    fontSize: 12,
+    color: 'red',
+    marginLeft: 25,
+    marginBottom: 10,
   },
 });
 

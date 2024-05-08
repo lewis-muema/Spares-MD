@@ -11,6 +11,7 @@ export const productSlice = createSlice({
       brand: '',
       brandErr: '',
       units: '',
+      unitsErr: '',
       priceErr: '',
       color: '',
       material: '',
@@ -21,8 +22,22 @@ export const productSlice = createSlice({
       model: null,
       modelObj: {},
       models: [],
+      variant: {
+        brand: '',
+        color: '',
+        material: '',
+        size: '',
+        units: '',
+        weight: '',
+      },
+      variants: [],
       image: '',
+      imageErr: '',
+      modelErr: '',
       uploadStatus: false,
+      errorMessage: '',
+      successMessage: '',
+      loading: false,
     },
   },
   reducers: {
@@ -50,12 +65,14 @@ export const productSlice = createSlice({
     addModel: (state, action) => {
       state.value.model = action.payload.value;
       state.value.modelObj = action.payload;
+      state.value.modelErr = '';
     },
     addModels: (state, action) => {
       state.value.models = action.payload;
     },
     addImage: (state, action) => {
       state.value.image = action.payload;
+      state.value.imageErr = '';
     },
     setUploadStatus: (state, action) => {
       state.value.uploadStatus = action.payload;
@@ -69,6 +86,9 @@ export const productSlice = createSlice({
     setUnits: (state, action) => {
       state.value.units = action.payload;
     },
+    setUnitsErr: (state, action) => {
+      state.value.unitsErr = action.payload;
+    },
     setColor: (state, action) => {
       state.value.color = action.payload;
     },
@@ -80,6 +100,46 @@ export const productSlice = createSlice({
     },
     setWeight: (state, action) => {
       state.value.weight = action.payload;
+    },
+    setVariant: (state, action) => {
+      state.value.variant[action.payload.key] = action.payload.value;
+    },
+    setVariantObject: (state, action) => {
+      state.value.variant = action.payload;
+    },
+    addVariant: (state, action) => {
+      state.value.variants.push(action.payload);
+    },
+    editVariant: (state, action) => {
+      state.value.variants[action.payload.index] = action.payload.object;
+    },
+    removeVariant: (state, action) => {
+      state.value.variants.splice(action.payload, 1);
+    },
+    resetVariant: (state, action) => {
+      state.value.variant = {
+        brand: '',
+        color: '',
+        material: '',
+        size: '',
+        units: '',
+        weight: '',
+      };
+    },
+    setErrorMessage: (state, action) => {
+      state.value.errorMessage = action.payload;
+    },
+    setSuccessMessage: (state, action) => {
+      state.value.successMessage = action.payload;
+    },
+    setImageErr: (state, action) => {
+      state.value.imageErr = action.payload;
+    },
+    setModelErr: (state, action) => {
+      state.value.modelErr = action.payload;
+    },
+    setLoading: (state, action) => {
+      state.value.loading = action.payload;
     },
   },
 });
@@ -103,6 +163,18 @@ export const {
   setMaterial,
   setSize,
   setWeight,
+  setUnitsErr,
+  setVariant,
+  addVariant,
+  removeVariant,
+  resetVariant,
+  setVariantObject,
+  editVariant,
+  setErrorMessage,
+  setImageErr,
+  setModelErr,
+  setSuccessMessage,
+  setLoading,
 } = productSlice.actions;
 
 export default productSlice.reducer;
