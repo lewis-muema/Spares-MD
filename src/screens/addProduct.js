@@ -23,7 +23,7 @@ import {
   setUnitsErr, setVariant, addVariant,
   removeVariant, resetVariant, setVariantObject,
   editVariant, setErrorMessage, setImageErr,
-  setModelErr,
+  setModelErr, setSuccessMessage,
 } from '../reducers/Product';
 import ImagePicker from '../components/imagePicker';
 import Spacer from '../components/Spacer';
@@ -46,6 +46,8 @@ const AddProductsScreen = () => {
   useEffect(() => {
     navigation.addListener('focus', () => {
       dispatch(fetchModels());
+      dispatch(setErrorMessage(''));
+      dispatch(setSuccessMessage(''));
     });
   }, []);
 
@@ -118,7 +120,7 @@ const AddProductsScreen = () => {
         name: product.name,
         storeId,
         price: parseInt(product.price, 10),
-        image: product.image,
+        image: product.photoId,
         modelId: product.modelObj._id,
         manufacturerId: product.modelObj.manufacturerId,
         variants: [
@@ -465,7 +467,7 @@ const AddProductsScreen = () => {
                 autoCapitalize='none'
                 autoCorrect={false}
                 leftIcon={
-                  <Entypo name="price-tag" size={18} color={palettes.palette.text} />
+                  <MaterialIcons name="numbers" size={18} color={palettes.palette.text} />
                 } />
             </View>
             <View style={styles.inputContainer}>

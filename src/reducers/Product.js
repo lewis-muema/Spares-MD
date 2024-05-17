@@ -32,12 +32,16 @@ export const productSlice = createSlice({
       },
       variants: [],
       image: '',
+      photoId: '',
       imageErr: '',
       modelErr: '',
       uploadStatus: false,
       errorMessage: '',
       successMessage: '',
       loading: false,
+      products: [],
+      searchLoading: false,
+      productDetails: {},
     },
   },
   reducers: {
@@ -73,6 +77,9 @@ export const productSlice = createSlice({
     addImage: (state, action) => {
       state.value.image = action.payload;
       state.value.imageErr = '';
+    },
+    setPhotoId: (state, action) => {
+      state.value.photoId = action.payload;
     },
     setUploadStatus: (state, action) => {
       state.value.uploadStatus = action.payload;
@@ -141,6 +148,15 @@ export const productSlice = createSlice({
     setLoading: (state, action) => {
       state.value.loading = action.payload;
     },
+    setProducts: (state, action) => {
+      state.value.products = action.payload;
+    },
+    setSearchLoading: (state, action) => {
+      state.value.searchLoading = action.payload;
+    },
+    setProductDetails: (state, action) => {
+      state.value.productDetails = action.payload;
+    },
   },
 });
 
@@ -175,6 +191,10 @@ export const {
   setModelErr,
   setSuccessMessage,
   setLoading,
+  setProducts,
+  setSearchLoading,
+  setProductDetails,
+  setPhotoId,
 } = productSlice.actions;
 
 export default productSlice.reducer;

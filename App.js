@@ -17,12 +17,14 @@ import SignUp from './src/screens/SignUp';
 import PasswordReset from './src/screens/PasswordReset';
 import Products from './src/screens/Products';
 import AddProduct from './src/screens/addProduct';
+import ViewProduct from './src/screens/viewProduct';
 import Orders from './src/screens/Orders';
 import Account from './src/screens/Account';
 import userReducer from './src/reducers/Users';
 import authReducer from './src/reducers/Auth';
 import configReducer from './src/reducers/Config';
 import productReducer from './src/reducers/Product';
+import cartReducer from './src/reducers/Cart';
 import paletteReducer, { changeBG, changeTheme, fontsLoadedStatus } from './src/reducers/Palette';
 
 
@@ -36,6 +38,7 @@ const store = configureStore({
     palette: paletteReducer,
     config: configReducer,
     product: productReducer,
+    cart: cartReducer,
   },
   middleware: getDefaultMiddleware => getDefaultMiddleware({
     immutableCheck: { warnAfter: 128 },
@@ -61,9 +64,35 @@ function Product() {
   return (
     <Stack.Navigator initialRouteName="Products" screenOptions={{
       headerShown: false,
+      headerStyle: {
+        backgroundColor: palettes.palette.background,
+        height: 80,
+      },
+      tabBarActiveTintColor: palettes.palette.background,
+      tabBarInactiveTintColor: palettes.palette.buttonsInactive,
+      tabBarStyle: {
+        backgroundColor: palettes.palette.text,
+        borderTopWidth: 0,
+        justifyContent: 'center',
+        height: Platform.OS === 'ios' ? 70 : 60,
+        paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+      },
     }}>
-      <Stack.Screen name="Products" component={Products} options={{ title: 'Products' }} />
-      <Stack.Screen name="AddProduct" component={AddProduct} options={{ title: 'Add a product' }} />
+      <Stack.Screen name="Products" component={Products} options={{
+        title: 'Products',
+        headerTitle: () => <Logo />,
+        headerShadowVisible: false,
+        headerShown: true,
+        headerBackVisible: false,
+      }} />
+      <Stack.Screen name="AddProduct" component={AddProduct} options={{
+        title: 'Add a product',
+        headerTitle: () => <Logo />,
+        headerShadowVisible: false,
+        headerShown: true,
+        headerBackVisible: false,
+      }} />
+      <Stack.Screen name="ViewProduct" component={ViewProduct} options={{ title: 'View product' }} />
     </Stack.Navigator>
   );
 }
@@ -92,8 +121,7 @@ function Home() {
         tabBarIcon: ({ color, size }) => (
           <Feather name="box" color={color} size={size} />
         ),
-        headerTitle: () => <Logo />,
-        headerShadowVisible: false,
+        headerShown: false,
       }} />
       <Bottom.Screen name="Orders" component={Orders} options={{
         title: 'Orders',

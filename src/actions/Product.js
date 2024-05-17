@@ -1,8 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSelector } from 'react-redux';
 import { storeConfig } from '../reducers/Config';
 import * as RootNavigation from '../RootNavigation';
 import {
-  addImage, addModels, setUploadStatus, setSuccessMessage, setErrorMessage, setLoading,
+  addImage, addModels, setUploadStatus,
+  setSuccessMessage, setErrorMessage, setPhotoId,
+  setLoading, setProducts, setSearchLoading,
 } from '../reducers/Product';
 import spares from '../api/spares';
 import photos from '../api/googlephotos';
@@ -55,6 +58,7 @@ export const uploadPhoto = (photoData, data) => {
 export const batchUpload = (uploadToken, data) => {
   return async (dispatch) => {
     photos.post('/v1/mediaItems:batchCreate', {
+      albumId: 'APeD70KFUe38TRSyq9BETOW-Pz30CRzbZ5EFE_sbpkAGwqK18_krC05Bx39-ZOeiDMH6ap61EsCs',
       newMediaItems: [
         {
           description: data.name,
@@ -77,6 +81,7 @@ export const getPhotoURL = (photoId) => {
   return async (dispatch) => {
     photos.get(`/v1/mediaItems/${photoId}`, { 'Content-Type': 'application/json' }).then((res) => {
       dispatch(addImage(res.data.baseUrl));
+      dispatch(setPhotoId(photoId));
       dispatch(setUploadStatus(false));
     }).catch((err) => {
       dispatch(setUploadStatus(false));
@@ -97,6 +102,40 @@ export const createProduct = (payload) => {
     }).catch((err) => {
       dispatch(setErrorMessage(`Failed to create product: ${err?.response?.data?.error}`));
       dispatch(setLoading(false));
+    });
+  };
+};
+
+export const fetchProducts = () => {
+  return async (dispatch) => {
+    dispatch(setLoading(true));
+    spares.get('/products').then((res) => {
+      dispatch(setProducts(res?.data?.products));
+      dispatch(setSuccessMessage(res?.data?.message));
+      dispatch(setLoading(false));
+      setTimeout(() => {
+        dispatch(setSuccessMessage(''));
+      }, 3000);
+    }).catch((err) => {
+      dispatch(setProducts([]));
+      dispatch(setLoading(false));
+    });
+  };
+};
+
+export const searchProduct = (name, sendID) => {
+  return async (dispatch) => {
+    dispatch(setSearchLoading(true));
+    let userId;
+    if (sendID) {
+      userId = await AsyncStorage.getItem('userId');
+    }
+    spares.post('/products-search', { name, userId }).then((res) => {
+      dispatch(setProducts(res?.data?.products));
+      dispatch(setSearchLoading(false));
+    }).catch((err) => {
+      dispatch(setProducts([]));
+      dispatch(setSearchLoading(false));
     });
   };
 };

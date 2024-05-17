@@ -11,7 +11,7 @@ export const paletteSlice = createSlice({
       infoCard: false,
       palette: {
         outline: '#ffffff',
-        background: '#eee7e7',
+        background: '#ffffff',
         text: '#113231',
         buttonsInactive: '#cf7033',
         metricsTop: '#b6541c',
