@@ -22,6 +22,7 @@ const ProductsScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [search, setSearch] = useState('');
+  const [searchActive, setSearchActive] = useState(false);
   const [counter, setCounter] = useState(0);
   const product = useSelector(state => state.product.value);
   const palettes = useSelector(state => state.palette.value);
@@ -51,10 +52,14 @@ const ProductsScreen = () => {
 
   useEffect(() => {
     if (search) {
+      setSearchActive(true);
       dispatch(searchProduct(search, true));
     } else {
       dispatch(setSearchLoading(false));
-      dispatch(fetchProducts());
+      if (searchActive) {
+        dispatch(fetchProducts());
+      }
+      setSearchActive(false);
     }
   }, [counter]);
 
@@ -74,10 +79,10 @@ const ProductsScreen = () => {
         inputContainerStyle={{ backgroundColor: palettes.palette.background }}
         showLoading={product.searchLoading}
         />
-        <View style={styles.cartIcon}>
+        <TouchableOpacity onPress={() => navigation.navigate('Cart')} style={styles.cartIcon}>
           <Text style={styles.cartCount}>{showTotalCount(cart)}</Text>
           <AntDesign name="shoppingcart" size={25} color={palettes.palette.text} />
-        </View>
+        </TouchableOpacity>
     </View>
     <FlatList
       horizontal={false}

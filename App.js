@@ -19,6 +19,8 @@ import Products from './src/screens/Products';
 import AddProduct from './src/screens/addProduct';
 import ViewProduct from './src/screens/viewProduct';
 import Orders from './src/screens/Orders';
+import Cart from './src/screens/Cart';
+import Checkout from './src/screens/Checkout';
 import Account from './src/screens/Account';
 import userReducer from './src/reducers/Users';
 import authReducer from './src/reducers/Auth';
@@ -64,19 +66,6 @@ function Product() {
   return (
     <Stack.Navigator initialRouteName="Products" screenOptions={{
       headerShown: false,
-      headerStyle: {
-        backgroundColor: palettes.palette.background,
-        height: 80,
-      },
-      tabBarActiveTintColor: palettes.palette.background,
-      tabBarInactiveTintColor: palettes.palette.buttonsInactive,
-      tabBarStyle: {
-        backgroundColor: palettes.palette.text,
-        borderTopWidth: 0,
-        justifyContent: 'center',
-        height: Platform.OS === 'ios' ? 70 : 60,
-        paddingBottom: Platform.OS === 'ios' ? 20 : 10,
-      },
     }}>
       <Stack.Screen name="Products" component={Products} options={{
         title: 'Products',
@@ -93,6 +82,20 @@ function Product() {
         headerBackVisible: false,
       }} />
       <Stack.Screen name="ViewProduct" component={ViewProduct} options={{ title: 'View product' }} />
+      <Stack.Screen name="Cart" component={Cart} options={{
+        title: 'Cart',
+        headerTitle: () => <Logo />,
+        headerShadowVisible: false,
+        headerShown: true,
+        headerBackVisible: false,
+      }} />
+      <Stack.Screen name="Checkout" component={Checkout} options={{
+        title: 'Checkout',
+        headerTitle: () => <Logo />,
+        headerShadowVisible: false,
+        headerShown: true,
+        headerBackVisible: false,
+      }} />
     </Stack.Navigator>
   );
 }
@@ -106,10 +109,10 @@ function Home() {
         backgroundColor: palettes.palette.background,
         height: 80,
       },
-      tabBarActiveTintColor: palettes.palette.background,
+      tabBarActiveTintColor: palettes.palette.text,
       tabBarInactiveTintColor: palettes.palette.buttonsInactive,
       tabBarStyle: {
-        backgroundColor: palettes.palette.text,
+        backgroundColor: palettes.palette.background,
         borderTopWidth: 0,
         justifyContent: 'center',
         height: Platform.OS === 'ios' ? 70 : 60,

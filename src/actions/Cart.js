@@ -47,10 +47,14 @@ export const addItemToCart = (id, item, cart, count) => {
           const products = [...cartProducts];
           const variants = [...cartProducts[index].variants];
           const variant = cartProducts[index].variants[varIndex];
-          variants[varIndex] = {
-            ...variant,
-            cart: variant.cart + count,
-          };
+          if (variant.cart + count === 0) {
+            variants.splice(varIndex, 1);
+          } else {
+            variants[varIndex] = {
+              ...variant,
+              cart: variant.cart + count,
+            };
+          }
           products[index] = {
             ...products[index],
             variants,
@@ -83,4 +87,21 @@ export const showTotalCount = (cart) => {
     });
   });
   return count;
+};
+
+export const cartProductDetails = (cart, products) => {
+  const cartProducts = [];
+  cart.products.forEach((product) => {
+    const filteredProduct = products.products.filter(prd => prd._id === product.productId);
+    product.variants.forEach((variant) => {
+      variant = {
+        ...variant,
+        ...filteredProduct[0],
+        _id: variant._id,
+        productId: product.productId,
+      };
+      cartProducts.push(variant);
+    });
+  });
+  return cartProducts;
 };

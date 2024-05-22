@@ -28,7 +28,9 @@ const ViewProductScreen = () => {
     dispatch(addItemToCart(product?.productDetails._id, item, cart, -1));
   };
 
-  return <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
+  return <View style={styles.container}>
+    <View style={styles.scrollContainer}>
+    <ScrollView showsVerticalScrollIndicator={false}>
     {
       product?.productDetails?._id
         ? <View>
@@ -180,21 +182,31 @@ const ViewProductScreen = () => {
                 </View>
               }
             />
-            <Button
-              title={`Proceed to cart (${showTotalCount(cart)} items)`}
-              buttonStyle={styles.proceedToCartButton}
-              titleStyle={styles.proceedToCartText}
-            />
           </View>
         </View>
         : null
     }
-  </ScrollView>;
+  </ScrollView>
+  </View>
+  <View style={styles.buttonContainer}>
+    <Button
+      title={`Proceed to cart (${showTotalCount(cart)} items)`}
+      buttonStyle={styles.proceedToCartButton}
+      titleStyle={styles.proceedToCartText}
+      onPress={() => navigation.navigate('Cart')}
+    />
+  </View></View>;
 };
 
 const paletteStyles = palette => StyleSheet.create({
   container: {
     height: '100%',
+  },
+  scrollContainer: {
+    flexShrink: 1,
+  },
+  buttonContainer: {
+    padding: 10,
   },
   productImage: {
     width: '100%',
@@ -242,7 +254,7 @@ const paletteStyles = palette => StyleSheet.create({
     paddingHorizontal: 15,
     marginTop: 10,
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   brandText: {
     fontSize: 14,
