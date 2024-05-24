@@ -26,6 +26,7 @@ import userReducer from './src/reducers/Users';
 import authReducer from './src/reducers/Auth';
 import configReducer from './src/reducers/Config';
 import productReducer from './src/reducers/Product';
+import checkoutReducer from './src/reducers/Checkout';
 import cartReducer from './src/reducers/Cart';
 import paletteReducer, { changeBG, changeTheme, fontsLoadedStatus } from './src/reducers/Palette';
 
@@ -41,6 +42,7 @@ const store = configureStore({
     config: configReducer,
     product: productReducer,
     cart: cartReducer,
+    checkout: checkoutReducer,
   },
   middleware: getDefaultMiddleware => getDefaultMiddleware({
     immutableCheck: { warnAfter: 128 },
