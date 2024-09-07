@@ -93,6 +93,7 @@ const CartScreen = () => {
                 </View>
               }
             />
+          <View style={{ flexGrow: 1 }}></View>
           <View style={styles.cartButtonContainer}>
             <Button
               title='Proceed to checkout'
@@ -208,7 +209,7 @@ const paletteStyles = palette => StyleSheet.create({
     justifyContent: 'center',
   },
   cartListContainer: {
-    flexShrink: 1,
+    height: '100%',
   },
   cartList: {
     flexShrink: 1,

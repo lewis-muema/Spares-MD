@@ -19,6 +19,7 @@ import Products from './src/screens/Products';
 import AddProduct from './src/screens/addProduct';
 import ViewProduct from './src/screens/viewProduct';
 import Orders from './src/screens/Orders';
+import Track from './src/screens/Track';
 import Cart from './src/screens/Cart';
 import Checkout from './src/screens/Checkout';
 import Account from './src/screens/Account';
@@ -28,6 +29,8 @@ import configReducer from './src/reducers/Config';
 import productReducer from './src/reducers/Product';
 import checkoutReducer from './src/reducers/Checkout';
 import cartReducer from './src/reducers/Cart';
+import ordersReducer from './src/reducers/Orders';
+import trackReducer from './src/reducers/Track';
 import paletteReducer, { changeBG, changeTheme, fontsLoadedStatus } from './src/reducers/Palette';
 
 
@@ -43,6 +46,8 @@ const store = configureStore({
     product: productReducer,
     cart: cartReducer,
     checkout: checkoutReducer,
+    orders: ordersReducer,
+    track: trackReducer,
   },
   middleware: getDefaultMiddleware => getDefaultMiddleware({
     immutableCheck: { warnAfter: 128 },
@@ -102,6 +107,30 @@ function Product() {
   );
 }
 
+function Order() {
+  const palettes = useSelector(state => state.palette.value);
+  return (
+    <Stack.Navigator initialRouteName="Orders" screenOptions={{
+      headerShown: false,
+    }}>
+      <Stack.Screen name="Orders" component={Orders} options={{
+        title: 'Orders',
+        headerTitle: () => <Logo />,
+        headerShadowVisible: false,
+        headerShown: true,
+        headerBackVisible: false,
+      }} />
+      <Stack.Screen name="Track" component={Track} options={{
+        title: 'Track Order',
+        headerTitle: () => <Logo />,
+        headerShadowVisible: false,
+        headerShown: true,
+        headerBackVisible: false,
+      }} />
+    </Stack.Navigator>
+  );
+}
+
 function Home() {
   const palettes = useSelector(state => state.palette.value);
   return (
@@ -111,6 +140,7 @@ function Home() {
         backgroundColor: palettes.palette.background,
         height: 80,
       },
+      unmountOnBlur: true,
       tabBarActiveTintColor: palettes.palette.text,
       tabBarInactiveTintColor: palettes.palette.buttonsInactive,
       tabBarStyle: {
@@ -128,13 +158,12 @@ function Home() {
         ),
         headerShown: false,
       }} />
-      <Bottom.Screen name="Orders" component={Orders} options={{
-        title: 'Orders',
+      <Bottom.Screen name="Order" component={Order} options={{
+        title: 'Order',
         tabBarIcon: ({ color, size }) => (
           <AntDesign name="shoppingcart" color={color} size={size} />
         ),
-        headerTitle: () => <Logo />,
-        headerShadowVisible: false,
+        headerShown: false,
       }} />
       <Bottom.Screen name="Account" component={Account} options={{
         title: 'Account',

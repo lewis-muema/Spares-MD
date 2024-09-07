@@ -18,9 +18,7 @@ export const signup = ({
 }) => {
   const status = 'active';
   const currency = 'KSH';
-  const paymentMethod = {
-    paytype: 'postpay',
-  };
+
   return async (dispatch) => {
     const payload = {
       email,
@@ -30,7 +28,6 @@ export const signup = ({
       type: userTypes[userType],
       status,
       currency,
-      paymentMethod,
     };
     spares.post('/signup', payload).then(async (res) => {
       storeData('token', res?.data?.token);
@@ -39,6 +36,7 @@ export const signup = ({
       storeData('currency', res?.data?.currency);
       storeData('type', res?.data?.type);
       storeData('status', res?.data?.status);
+      storeData('paymentMethods', JSON.stringify(res?.data?.paymentMethods));
       dispatch(addToken(res?.data?.token));
       dispatch(setLoading(false));
       if (userType === 1) {
@@ -62,15 +60,18 @@ export const signin = ({ email, password }, loading) => {
   return async (dispatch) => {
     spares.post('/signin', { email, password }).then((res) => {
       storeData('token', res?.data?.token);
-      storeData('storeId', res?.data?.storeId);
       storeData('currency', res?.data?.currency);
       storeData('type', res?.data?.type);
       storeData('status', res?.data?.status);
       storeData('email', email);
       storeData('userId', res?.data?.userId);
+      storeData('paymentMethods', JSON.stringify(res?.data?.paymentMethods));
       dispatch(addToken(res?.data?.token));
+      if (res?.data?.storeId) {
+        storeData('storeId', res?.data?.storeId);
+      }
       loading(false);
-      RootNavigation.navigate('Products');
+      RootNavigation.navigate('Product');
     }).catch((err) => {
       dispatch(addError(err?.response?.data?.message));
       loading(false);
@@ -192,4 +193,39 @@ export const fetchPlaces = (input) => {
       }).catch((err) => {});
     }
   };
+};
+
+export const organizeLocation = (item) => {
+  const locations = {
+    description: item.description,
+    building: '',
+    street: '',
+    town: '',
+    country: '',
+  };
+  if (item.terms.length === 1) {
+    locations.country = item.terms[0].value;
+  }
+  if (item.terms.length === 2) {
+    locations.town = item.terms[0].value;
+    locations.country = item.terms[1].value;
+  }
+  if (item.terms.length === 3) {
+    locations.building = item.terms[0].value;
+    locations.town = item.terms[1].value;
+    locations.country = item.terms[2].value;
+  }
+  if (item.terms.length === 4) {
+    locations.building = item.terms[0].value;
+    locations.street = item.terms[1].value;
+    locations.town = item.terms[2].value;
+    locations.country = item.terms[3].value;
+  }
+  if (item.terms.length === 5) {
+    locations.building = item.terms[0].value;
+    locations.street = item.terms[1].value;
+    locations.town = `${item.terms[2].value}, ${item.terms[3].value}`;
+    locations.country = item.terms[4].value;
+  }
+  return locations;
 };
